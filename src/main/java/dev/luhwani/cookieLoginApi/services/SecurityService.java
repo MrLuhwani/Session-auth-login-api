@@ -2,8 +2,11 @@ package dev.luhwani.cookieLoginApi.services;
 
 public interface SecurityService {
 
-    byte[] hashText(String input);
+    String hashPassword(CharSequence rawpassword);
 
-    boolean passwordMatch(byte[] userInput, byte[] storedHash);
-    
+    boolean passwordsMatch(CharSequence storedHash, String rawPassword);
+
 }
+
+// this service method may not need to exist, because spring security is already
+// doing authentication

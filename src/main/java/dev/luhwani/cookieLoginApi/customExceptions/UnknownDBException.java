@@ -6,4 +6,12 @@ public class UnknownDBException extends RuntimeException {
         super(message, cause);
     }
     
+    public UnknownDBException(String message) {
+        super(message);
+    }
+
+    public UnknownDBException() {
+    }
 }
+
+//this might not be needed last last
