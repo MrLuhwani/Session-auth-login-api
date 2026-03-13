@@ -1,19 +1,18 @@
 package dev.luhwani.cookieLoginApi.repositories;
 
 import java.sql.PreparedStatement;
-import java.sql.Statement;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import dev.luhwani.cookieLoginApi.customExceptions.UnknownDBException;
+import dev.luhwani.cookieLoginApi.customExceptions.AuthInfrastructureException;
 import dev.luhwani.cookieLoginApi.dto.RegisterRequest;
-import dev.luhwani.cookieLoginApi.dto.User;
+import dev.luhwani.cookieLoginApi.dto.UserRecord;
 
 @Repository
 public class UserRepository {
@@ -38,92 +37,82 @@ public class UserRepository {
 
     public Long registerUserAndReturnId(RegisterRequest req, String passwordHash) {
         String sql = """
-                INSERT INTO users (email, username, password_hash, enabled, created_at, last_login, authority)
-                VALUES (?, ?, ?, true, NOW(), NULL, 'ROLE_USER');
-                """;
-        KeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbc.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, req.email());
-            ps.setString(2, req.username());
-            ps.setString(3, passwordHash);
-            return ps;
-        }, keyHolder);
-        Number idKey = keyHolder.getKey();
-        if (idKey == null) {
-                throw new UnknownDBException("Error occured while generating user id");
-            }
-        return idKey.longValue();
-    }
-
-    public Optional<User> findByEmail(String emailInput) {
-        String sql = """
-                SELECT id, username, password_hash, enabled, authority FROM users WHERE email = ?;""";
-        RowMapper<User> rowMapper = (r, i) -> {
-            Long id= r.getLong("id");
-            String username = r.getString("username");
-            String passwordHash = r.getString("password_hash");
-            boolean enabled = r.getBoolean("enabled");
-            String authority = r.getString("authority");
-            return new User(emailInput, id, username, passwordHash, enabled, authority);
-        };
-        ;
-        List<User> authCreds = jdbc.query(sql, rowMapper, emailInput);
-        return authCreds.stream().findFirst();
-    }
-
-}
-
-/*
-    public Long createUser(RegisterRequest req, String passwordHash) {
-        String sql = """
-                insert into users (email, username, password_hash, enabled, created_at, authority)
-                values (?, ?, ?, true, now(), 'ROLE_USER')
+                INSERT INTO users (email, username, password_hash, enabled, created_at)
+                VALUES (?, ?, ?, true, NOW())
                 """;
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbc.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            // Specify the auto-increment column name explicitly
+            PreparedStatement ps = connection.prepareStatement(sql, new String[] { "id" });
             ps.setString(1, req.email().trim());
             ps.setString(2, req.username().trim());
             ps.setString(3, passwordHash);
             return ps;
         }, keyHolder);
 
-        Number key = keyHolder.getKey();
-        if (key == null) {
-            throw new IllegalStateException("User was inserted but no generated id was returned");
+        Number idKey = keyHolder.getKey();
+        if (idKey == null) {
+            throw new AuthInfrastructureException("Failed to retrieve generated user ID.");
         }
-        return key.longValue();
+
+        Long userId = idKey.longValue();
+        String authoritySql = "INSERT INTO authorities (user_id, authority) VALUES (?, ?)";
+        jdbc.update(authoritySql, userId, "ROLE_USER");
+        return userId;
+    }
+
+    public void setLastLogin(Long userId) {
+        String sql = "UPDATE users SET last_login = now() WHERE id = ?";
+        jdbc.update(sql, userId);
     }
 
     public Optional<UserRecord> findByEmail(String email) {
         String sql = """
-                select id, email, username, password_hash, enabled, authority
+                select id, email, username, password_hash, enabled
                 from users
                 where email = ?
                 """;
 
         try {
-            UserRecord user = jdbc.queryForObject(sql, (rs, rowNum) ->
+            List<UserRecord> users = jdbc.query(sql, (rs, rowNum) ->
                     new UserRecord(
-                            rs.getLong("id"),
                             rs.getString("email"),
+                            rs.getLong("id"),
                             rs.getString("username"),
                             rs.getString("password_hash"),
                             rs.getBoolean("enabled"),
-                            rs.getString("authority")
+                            List.of()
                     ), email);
 
-            return Optional.ofNullable(user);
+                    if (users.isEmpty()) {
+                        return Optional.empty();
+                    }
+
+                    UserRecord baseUser = users.getFirst();
+
+                    String authSql = """
+                            SELECT authority
+                            FROM authorities
+                            WHERE user_id = ?
+                            """;
+
+                    List<String> authorities = jdbc.query(
+                            authSql,
+                            (rs, rowNum) -> rs.getString("authority"),
+                            baseUser.id());
+
+                    return Optional.of(new UserRecord(
+                            baseUser.email(),
+                            baseUser.id(),
+                            baseUser.username(),
+                            baseUser.passwordHash(),
+                            baseUser.enabled(),
+                            authorities));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
     }
 
-    public void updateLastLogin(Long userId) {
-        String sql = "update users set last_login = now() where id = ?";
-        jdbc.update(sql, userId);
-    }
-*/
+}

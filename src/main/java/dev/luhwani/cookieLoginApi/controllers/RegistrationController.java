@@ -1,7 +1,10 @@
 package dev.luhwani.cookieLoginApi.controllers;
 
+import java.util.stream.Collectors;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -9,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import dev.luhwani.cookieLoginApi.customExceptions.BadRequestException;
 import dev.luhwani.cookieLoginApi.dto.RegisterRequest;
 import dev.luhwani.cookieLoginApi.dto.RegisterResponse;
+import dev.luhwani.cookieLoginApi.security.CustomUserPrincipal;
 import dev.luhwani.cookieLoginApi.services.RegistrationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -29,41 +33,19 @@ public class RegistrationController {
         if (req == null) {
             throw new BadRequestException("RequestBody is required");
         }
-        Long userId = registrationService.registerAndLogin(req, httpRequest, httpResponse);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new RegisterResponse(
-                        "Registration successful",
-                        userId,
-                        req.username(),
-                        "/home"));
-    }
-
-}
-
-/*
-    @PostMapping("/register")
-    public ResponseEntity<RegisterResponse> register(
-            @RequestBody RegisterRequest requestBody,
-            HttpServletRequest request,
-            HttpServletResponse response
-    ) {
-        Authentication authentication = registrationService.registerAndLogin(
-                requestBody, request, response
-        );
-
+        Authentication authentication = registrationService.registerAndLogin(req, httpRequest, httpResponse);
         CustomUserPrincipal principal = (CustomUserPrincipal) authentication.getPrincipal();
 
         RegisterResponse body = new RegisterResponse(
                 "Registration successful",
-                principal.getId(),
                 principal.getEmail(),
                 principal.getDisplayUsername(),
                 principal.getAuthorities().stream()
                         .map(a -> a.getAuthority())
-                        .collect(Collectors.toList())
-        );
+                        .collect(Collectors.toList()),
+                "/me");
 
         return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
+
 }
- */

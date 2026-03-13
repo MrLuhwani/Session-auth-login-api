@@ -1,0 +1,45 @@
+package dev.luhwani.cookieLoginApi.exceptionHandler;
+
+import java.util.Map;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import dev.luhwani.cookieLoginApi.customExceptions.AuthInfrastructureException;
+import dev.luhwani.cookieLoginApi.customExceptions.BadRequestException;
+import dev.luhwani.cookieLoginApi.customExceptions.DuplicateEmailException;
+import dev.luhwani.cookieLoginApi.customExceptions.DuplicateUsernameException;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+    
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<Map<String, Object>> handleBadRequest(BadRequestException ex) {
+        return ResponseEntity.badRequest().body(Map.of(
+                "message", ex.getMessage()
+        ));
+    }
+
+    @ExceptionHandler(DuplicateEmailException.class)
+    public ResponseEntity<Map<String, Object>> handleDuplicateEmail(DuplicateEmailException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                "message", ex.getMessage()
+        ));
+    }
+
+    @ExceptionHandler(DuplicateUsernameException.class)
+    public ResponseEntity<Map<String, Object>> handleDuplicateUsername(DuplicateUsernameException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+                "message", ex.getMessage()
+        ));
+    }
+
+    @ExceptionHandler(AuthInfrastructureException.class)
+    public ResponseEntity<Map<String, Object>> handleInfrastructure(AuthInfrastructureException ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "message", "Authentication infrastructure error"
+        ));
+    }
+}

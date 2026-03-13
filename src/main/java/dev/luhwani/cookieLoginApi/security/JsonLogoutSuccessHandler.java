@@ -1,22 +1,17 @@
 package dev.luhwani.cookieLoginApi.security;
 
-public class JsonLogoutSuccessHandler {
-    
-}
+import java.io.IOException;
 
-/*
-package dev.luhwani.cookieLoginApi.security;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.luhwani.cookieLoginApi.dto.LogoutResponse;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import dev.luhwani.cookieLoginApi.dto.LogoutResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class JsonLogoutSuccessHandler implements LogoutSuccessHandler {
@@ -35,6 +30,7 @@ public class JsonLogoutSuccessHandler implements LogoutSuccessHandler {
     ) throws IOException, ServletException {
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType("application/json");
-        objectMapper.writeValue(response.getOutputStream(), new LogoutResponse("Logout successful"));
+        objectMapper.writeValue(response.getOutputStream(), new LogoutResponse("Logout successful", "/login"));
     }
-}    */
+    
+}
