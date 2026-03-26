@@ -17,6 +17,7 @@ import dev.luhwani.cookieLoginApi.security.CustomUserPrincipal;
 import dev.luhwani.cookieLoginApi.services.RegistrationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 
 @RestController
 public class RegistrationController {
@@ -28,9 +29,11 @@ public class RegistrationController {
         this.registrationService = registrationService;
     }
 
+    //create a custom email validation annotation
+
     @PostMapping("/register")
     public ResponseEntity<RegisterResponse> register(
-            @RequestBody RegisterRequest req, HttpServletRequest httpRequest,
+            @Valid @RequestBody RegisterRequest req, HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
         
         log.debug("Register request from ip: {}", httpRequest.getRemoteAddr());

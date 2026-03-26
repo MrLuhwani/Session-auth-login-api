@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import dev.luhwani.cookieLoginApi.customExceptions.AuthInfrastructureException;
-import dev.luhwani.cookieLoginApi.customExceptions.BadRequestException;
 import dev.luhwani.cookieLoginApi.customExceptions.DuplicateEmailException;
 import dev.luhwani.cookieLoginApi.customExceptions.DuplicateUsernameException;
 import dev.luhwani.cookieLoginApi.dto.RegisterRequest;
@@ -59,22 +58,6 @@ public class RegistrationService {
 
         //try and do something like a compare with common passwords like password, or something else
 
-        String email = req.email() == null ? null : req.email().trim().toLowerCase();
-        String username = req.username() == null ? null : req.username().trim();
-        String password = req.password() == null ? null : req.password();
-        
-        if (!Utils.validEmail(email)) {
-            throw new BadRequestException("Invalid email format");
-        }
-
-        if (!Utils.validUsername(username)) {
-            throw new BadRequestException("Invalid username format");
-        }
-
-        if (!Utils.validPassword(password)) {
-            throw new BadRequestException("Invalid password format");
-        }
-        
         try {
             String passwordHash = passwordEncoder.encode(req.password());
             Long userId = userRepo.registerUserAndReturnId(req, passwordHash);

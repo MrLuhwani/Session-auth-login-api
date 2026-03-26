@@ -19,6 +19,6 @@ public record RegisterRequest(
         //at least an uppercase
         //at least one digit
         //length of 8-30
-        @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,30}$")
+        @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,30}$", message = "Invalid password format")
         String password) {
 }
