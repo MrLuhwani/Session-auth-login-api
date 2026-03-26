@@ -40,6 +40,7 @@ public class SecurityConfig {
         this.logoutSuccessHandler = logoutSuccessHandler;
     }
 
+    //yo, check how this works from Claude later
     @Configuration
     public static class JacksonConfig {
         @Bean
@@ -61,10 +62,6 @@ public class SecurityConfig {
     // an addition of a third device deletes the session on the device with the
     // oldest cookie session, and allocates
     // a new session to the new device
-
-    // also look into the concurrent session control, which can be used to prevent
-    // multiple logins from the same user, and can be configured to either prevent
-    // new logins or expire old sessions when the maximum is reached.
 
     private void hardenSession(SessionManagementConfigurer<HttpSecurity> session) {
         session.sessionFixation(SessionManagementConfigurer.SessionFixationConfigurer::migrateSession)

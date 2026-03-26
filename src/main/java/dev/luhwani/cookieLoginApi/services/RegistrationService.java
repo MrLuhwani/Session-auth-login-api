@@ -1,6 +1,9 @@
 package dev.luhwani.cookieLoginApi.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -28,6 +31,8 @@ public class RegistrationService {
     private final SecurityContextRepository securityContextRepository;
     private final AuthenticationManager authenticationManager;
 
+    private static final Logger log = LoggerFactory.getLogger(RegistrationService.class);
+
     public RegistrationService(UserRepository userRepo,
             SecurityContextRepository securityContextRepository,
             PasswordEncoder passwordEncoder,
@@ -39,10 +44,25 @@ public class RegistrationService {
     }
 
     @Transactional
+    public Authentication registerAndLogin(RegisterRequest req, HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
+        Long userId = register(req);
+        Authentication authentication = loginAfterRegistration(req, httpRequest, httpResponse);
+        userRepo.setLastLogin(userId);
+        return authentication;
+    }
+
     public Long register(RegisterRequest req) {
+
+        //trying to avoid this check by adding annotations to the rest controller
+        //and to the dto
+
+        //try and do something like a compare with common passwords like password, or something else
+
         String email = req.email() == null ? null : req.email().trim().toLowerCase();
         String username = req.username() == null ? null : req.username().trim();
         String password = req.password() == null ? null : req.password();
+        
         if (!Utils.validEmail(email)) {
             throw new BadRequestException("Invalid email format");
         }
@@ -54,19 +74,25 @@ public class RegistrationService {
         if (!Utils.validPassword(password)) {
             throw new BadRequestException("Invalid password format");
         }
-
+        
         try {
-            if (userRepo.emailExists(email)) {
-                throw new DuplicateEmailException("This account already exists");
-            }
-            if (userRepo.usernameExists(username)) {
-                throw new DuplicateUsernameException("Username is already in use");
-            }
             String passwordHash = passwordEncoder.encode(req.password());
             Long userId = userRepo.registerUserAndReturnId(req, passwordHash);
             return userId;
+        } catch (DataIntegrityViolationException e) {
+            String message = e.getMostSpecificCause().getMessage().toLowerCase();
+            if (message.contains("users_username_key") || message.contains("unique")) {
+                throw new DuplicateUsernameException("Username is already taken");
+            } else if (message.contains("users_email_key") || message.contains("unique")) {
+                throw new DuplicateEmailException("Email is already registered");
+            } else {
+                throw new RuntimeException("A database error occurred during registration", e);
+            }
         } catch (DataAccessException e) {
-            throw new AuthInfrastructureException("Error occured while registering user", e);
+
+            log.error("Error while registering {}", req.email(), e);
+
+            throw new AuthInfrastructureException(e.getMessage(), e);    
         }
     }
 
@@ -83,12 +109,4 @@ public class RegistrationService {
         return authentication;
     }
 
-    @Transactional
-    public Authentication registerAndLogin(RegisterRequest req, HttpServletRequest httpRequest,
-            HttpServletResponse httpResponse) {
-        Long userId = register(req);
-        Authentication authentication = loginAfterRegistration(req, httpRequest, httpResponse);
-        userRepo.setLastLogin(userId);
-        return authentication;
-    }
 }

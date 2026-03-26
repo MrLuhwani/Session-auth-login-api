@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: cookie-login-api
+  datasource:
+    url: jdbc:postgresql://localhost:5432/login_db
+    username: postgres
+    password: password
+  sql:
+    init:
+      mode: always
+
+logging:
+  level:
+    root: INFO
+    dev.luhwani.cookieLoginApi: DEBUG
+    org.springframework: WARN
+  appender:
+    rolling-file:
+      file-name-pattern: logs/app-%d{yyyy-MM-dd}.log
+      max-history: 45
+      total-size-cap: 1GB
+  file:
+    name: logs/app.log

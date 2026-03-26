@@ -4,6 +4,8 @@ import java.sql.PreparedStatement;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -19,20 +21,10 @@ public class UserRepository {
 
     private final JdbcTemplate jdbc;
 
+    private static final Logger log = LoggerFactory.getLogger(UserRepository.class);
+
     public UserRepository(JdbcTemplate jdbc) {
         this.jdbc = jdbc;
-    }
-
-    public boolean emailExists(String email) {
-        String sql = "SELECT COUNT(*) FROM users WHERE email = ?;";
-        Integer count = jdbc.queryForObject(sql, Integer.class, email);
-        return count != null && count > 0;
-    }
-
-    public boolean usernameExists(String username) {
-        String sql = "SELECT COUNT(*) FROM users WHERE username = ?;";
-        Integer count = jdbc.queryForObject(sql, Integer.class, username);
-        return count != null && count > 0;
     }
 
     public Long registerUserAndReturnId(RegisterRequest req, String passwordHash) {
@@ -44,7 +36,6 @@ public class UserRepository {
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbc.update(connection -> {
-            // Specify the auto-increment column name explicitly
             PreparedStatement ps = connection.prepareStatement(sql, new String[] { "id" });
             ps.setString(1, req.email().trim());
             ps.setString(2, req.username().trim());
@@ -54,18 +45,26 @@ public class UserRepository {
 
         Number idKey = keyHolder.getKey();
         if (idKey == null) {
+
+            log.error("Failed to generate user Id for {}", req.email());
+
             throw new AuthInfrastructureException("Failed to retrieve generated user ID.");
         }
 
         Long userId = idKey.longValue();
         String authoritySql = "INSERT INTO authorities (user_id, authority) VALUES (?, ?)";
         jdbc.update(authoritySql, userId, "ROLE_USER");
+
+        log.info("New registered user with id: {}", userId);
+
         return userId;
     }
 
     public void setLastLogin(Long userId) {
         String sql = "UPDATE users SET last_login = now() WHERE id = ?";
         jdbc.update(sql, userId);
+
+        log.info("Login from user id: {}", userId);
     }
 
     public Optional<UserRecord> findByEmail(String email) {

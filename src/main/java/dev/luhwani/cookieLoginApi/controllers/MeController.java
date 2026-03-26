@@ -1,6 +1,5 @@
 package dev.luhwani.cookieLoginApi.controllers;
 
-import dev.luhwani.cookieLoginApi.customExceptions.UnauthorizedException;
 import dev.luhwani.cookieLoginApi.dto.MeResponse;
 import dev.luhwani.cookieLoginApi.security.CustomUserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -14,9 +13,6 @@ public class MeController {
 
     @GetMapping("/me")
     public MeResponse me(@AuthenticationPrincipal CustomUserPrincipal principal) {
-        if (principal == null) {
-            throw new UnauthorizedException("Unauthorized access to /me controller");
-        }
         return new MeResponse(
                 principal.getEmail(),
                 principal.getDisplayUsername(),

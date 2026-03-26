@@ -2,6 +2,8 @@ package dev.luhwani.cookieLoginApi.services;
 
 import java.util.regex.Pattern;
 
+//trying to make this class useless
+
 public final class Utils {
 
     private static final Pattern EMAIL_PATTERN = Pattern

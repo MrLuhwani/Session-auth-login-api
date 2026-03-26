@@ -17,6 +17,8 @@ public class JsonAuthenticationFailureHandler implements AuthenticationFailureHa
 
     private final ObjectMapper objectMapper;
 
+    //add brute force logging and prevention here
+
     public JsonAuthenticationFailureHandler(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
