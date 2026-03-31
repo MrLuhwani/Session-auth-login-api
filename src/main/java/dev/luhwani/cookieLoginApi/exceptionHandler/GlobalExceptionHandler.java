@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import dev.luhwani.cookieLoginApi.customExceptions.AuthInfrastructureException;
-import dev.luhwani.cookieLoginApi.customExceptions.BadRequestException;
 import dev.luhwani.cookieLoginApi.customExceptions.DuplicateEmailException;
 import dev.luhwani.cookieLoginApi.customExceptions.DuplicateUsernameException;
 
@@ -25,13 +24,6 @@ public class GlobalExceptionHandler {
             errors.put(err.getField(), err.getDefaultMessage());
         });
         return ResponseEntity.badRequest().body(errors);
-    }
-    
-    @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<Map<String, Object>> handleBadRequest(BadRequestException ex) {
-        return ResponseEntity.badRequest().body(Map.of(
-                "message", ex.getMessage()
-        ));
     }
 
     @ExceptionHandler(DuplicateEmailException.class)

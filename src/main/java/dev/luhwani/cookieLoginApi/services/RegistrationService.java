@@ -53,11 +53,6 @@ public class RegistrationService {
 
     public Long register(RegisterRequest req) {
 
-        //trying to avoid this check by adding annotations to the rest controller
-        //and to the dto
-
-        //try and do something like a compare with common passwords like password, or something else
-
         try {
             String passwordHash = passwordEncoder.encode(req.password());
             Long userId = userRepo.registerUserAndReturnId(req, passwordHash);

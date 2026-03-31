@@ -1,5 +1,6 @@
 package dev.luhwani.cookieLoginApi.security;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -16,7 +17,11 @@ public class JdbcUserDetailsService implements UserDetailsService {
     public JdbcUserDetailsService(UserRepository userRepo) {
         this.userRepo = userRepo;
     }
+
+    // the unless is so that if the email isn't found, we won't cache
+    // a null response
     
+    @Cacheable(value = "user-details", key = "#email", unless = "#result == null")
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         UserRecord user = userRepo.findByEmail(email)

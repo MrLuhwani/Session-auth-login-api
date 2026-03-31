@@ -1,14 +1,12 @@
 package dev.luhwani.cookieLoginApi.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record RegisterRequest(
         //check later if the annotation for email check is too simple
-        @Email(message = "Please provide a valid email address")
-        @Size(min = 5, max = 50, message = "Email is to be within {min} and {max}")
+        @Pattern(regexp = "^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,50}$", message = "Invalid email address")
         String email,
 
         @NotBlank(message = "Username is required")

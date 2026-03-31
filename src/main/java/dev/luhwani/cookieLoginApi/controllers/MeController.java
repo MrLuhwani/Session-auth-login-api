@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 @RestController
 public class MeController {
 
+    //is this meant to have @Preauthorize hmm...
     @GetMapping("/me")
     public MeResponse me(@AuthenticationPrincipal CustomUserPrincipal principal) {
         return new MeResponse(
