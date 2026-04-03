@@ -12,20 +12,6 @@ import io.github.bucket4j.Bucket;
 @Service
 public class RateLimiterService {
 
-    /*
-    we need to rate limit the endpoints too. So far, each user is identified
-    based on their ip. And for the three majr endpoints
-    So, how do we rate limit per endpint, and not just per ip
-
-    So, when anyone calls the register/login endpoint, there should be a reduction 
-    in the bucket assigned to it
-
-    when we run the resolve bucket of the handler interceptor, we consume based on the input
-     */
-
-    //the String is a combo of the client ip address and the endpoint they called, so for
-    //each user, there are multiple buckets for each endpoint
-
     public final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
 
     private Bucket createLoginBucket() {

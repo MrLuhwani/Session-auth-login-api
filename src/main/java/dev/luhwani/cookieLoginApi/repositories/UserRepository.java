@@ -1,6 +1,8 @@
 package dev.luhwani.cookieLoginApi.repositories;
 
 import java.sql.PreparedStatement;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -69,7 +71,7 @@ public class UserRepository {
 
     public Optional<UserRecord> findByEmail(String email) {
         String sql = """
-                select id, email, username, password_hash, enabled
+                select id, email, username, password_hash, enabled, locked_until
                 from users
                 where email = ?
                 """;
@@ -82,6 +84,7 @@ public class UserRepository {
                             rs.getString("username"),
                             rs.getString("password_hash"),
                             rs.getBoolean("enabled"),
+                            rs.getTimestamp("locked_until"),
                             List.of()
                     ), email);
 
@@ -108,10 +111,16 @@ public class UserRepository {
                             baseUser.username(),
                             baseUser.passwordHash(),
                             baseUser.enabled(),
+                            baseUser.lockedUntil(),
                             authorities));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
+    }
+
+    public void tempAcctLock(String email, LocalDateTime until) {
+        String sql = "UPDATE users SET locked_until = ? WHERE email = ?";
+        jdbc.update(sql, Timestamp.valueOf(until), email);
     }
 
 }

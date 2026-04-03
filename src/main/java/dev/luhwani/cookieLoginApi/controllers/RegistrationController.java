@@ -29,8 +29,6 @@ public class RegistrationController {
         this.registrationService = registrationService;
     }
 
-    //create a custom email validation annotation
-
     @PostMapping("/register")
     public ResponseEntity<RegisterResponse> register(
             @Valid @RequestBody RegisterRequest req, HttpServletRequest httpRequest,

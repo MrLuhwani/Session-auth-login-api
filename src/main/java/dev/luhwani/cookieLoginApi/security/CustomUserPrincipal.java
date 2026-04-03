@@ -1,5 +1,6 @@
 package dev.luhwani.cookieLoginApi.security;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -15,16 +16,18 @@ public class CustomUserPrincipal implements UserDetails {
     private final String username;
     private final String passwordHash;
     private final boolean enabled;
+    private final boolean notLocked;
     private final List<SimpleGrantedAuthority> authorities;
 
 
     public CustomUserPrincipal(Long id, String email, String username, String passwordHash, boolean enabled,
-            List<SimpleGrantedAuthority> authorities) {
+            boolean notLocked, List<SimpleGrantedAuthority> authorities) {
         this.id = id;
         this.email = email;
         this.username = username;
         this.passwordHash = passwordHash;
         this.enabled = enabled;
+        this.notLocked = notLocked;
         this.authorities = authorities;
     }
 
@@ -32,12 +35,15 @@ public class CustomUserPrincipal implements UserDetails {
         List<SimpleGrantedAuthority> grantedAuthorities = user.authorities().stream()
                 .map(SimpleGrantedAuthority::new)
                 .toList();
+        LocalDateTime lockTime = user.lockedUntil().toLocalDateTime();
+        boolean notLocked = lockTime == null || LocalDateTime.now().isAfter(lockTime) ? true : false;
         return new CustomUserPrincipal(
                 user.id(),
                 user.email(),
                 user.username(),
                 user.passwordHash(),
                 user.enabled(),
+                notLocked,
                 grantedAuthorities
         );
     }
@@ -71,6 +77,10 @@ public class CustomUserPrincipal implements UserDetails {
     public boolean isEnabled() {
         return enabled;
     }
+
+    public boolean isAccountNonLocked() {
+      return notLocked;
+   }
 
     @Override
     public Collection<? extends SimpleGrantedAuthority> getAuthorities() {

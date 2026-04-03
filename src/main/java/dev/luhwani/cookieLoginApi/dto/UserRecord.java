@@ -1,5 +1,6 @@
 package dev.luhwani.cookieLoginApi.dto;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 public record UserRecord(
@@ -8,5 +9,7 @@ public record UserRecord(
         String username,
         String passwordHash,
         boolean enabled,
-        List<String> authorities) {
+        Timestamp lockedUntil,
+        List<String> authorities
+        ) {
 }

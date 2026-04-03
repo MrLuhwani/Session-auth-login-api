@@ -63,6 +63,9 @@ public class SecurityConfig {
     // oldest cookie session, and allocates
     // a new session to the new device
 
+    // hold on, is this actually working, tests with postman are still
+    // allowing more than two sessisons
+
     private void hardenSession(SessionManagementConfigurer<HttpSecurity> session) {
         session.sessionFixation(SessionManagementConfigurer.SessionFixationConfigurer::migrateSession)
                 .maximumSessions(2).maxSessionsPreventsLogin(false);

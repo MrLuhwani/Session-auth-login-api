@@ -20,7 +20,7 @@ public class JsonAccessDeniedHandler implements AccessDeniedHandler {
 
     private final ObjectMapper objectMapper;
 
-    private final Logger log = LoggerFactory.getLogger(JsonAccessDeniedHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(JsonAccessDeniedHandler.class);
 
     public JsonAccessDeniedHandler(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
