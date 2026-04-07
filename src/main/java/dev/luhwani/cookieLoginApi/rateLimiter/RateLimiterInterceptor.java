@@ -17,29 +17,20 @@ public class RateLimiterInterceptor implements HandlerInterceptor {
     private final RateLimiterService rateLimiterService;
     private final RateLimiterResponseHelper responseHelper;
 
-    private final Bucket loginEndpointBucket;
-        private final Bucket registerEndpointBucket;
+    private static final Bucket registerEndpointBucket = Bucket.builder().addLimit(
+                    Bandwidth.builder()
+                        .capacity(10)
+                        .refillIntervally(10, Duration.ofMinutes(1))
+                        .build())
+                    .build();
 
-    // when the admin enpoint is created, it'll be a different issue
+    // any other endpoint that needs to be rate limited will also be placed here
+    // except for the login endpoint because Spring will handle login for you
 
     public RateLimiterInterceptor(RateLimiterService rateLimiterService,
             RateLimiterResponseHelper responseHelper) {
         this.rateLimiterService = rateLimiterService;
         this.responseHelper = responseHelper;
-
-        loginEndpointBucket = Bucket.builder().addLimit(
-                    Bandwidth.builder()
-                        .capacity(15)
-                        .refillGreedy(15, Duration.ofMinutes(1))
-                        .build())
-                    .build();
-
-        registerEndpointBucket = Bucket.builder().addLimit(
-                    Bandwidth.builder()
-                        .capacity(10)
-                        .refillGreedy(10, Duration.ofMinutes(1))
-                        .build())
-                    .build();
     }
 
     @Override
@@ -57,13 +48,10 @@ public class RateLimiterInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        ConsumptionProbe probe;
+        // if other endpoints to be rate limited existed, there would be an if-else, to
+        // determine whose bucket should have a consumption probe gotten from
 
-        if (endpointKey.equals("login")) {
-            probe = loginEndpointBucket.tryConsumeAndReturnRemaining(1);
-        } else {
-            probe = registerEndpointBucket.tryConsumeAndReturnRemaining(1);
-        }
+        ConsumptionProbe probe = registerEndpointBucket.tryConsumeAndReturnRemaining(1);;
 
         if (!probe.isConsumed()) {
             responseHelper.writeRateLimitExceededResponse(response, probe);

@@ -23,6 +23,7 @@ public class RateLimiterResponseHelper {
 
     public void addRateLimitHeaders(HttpServletResponse response, Bucket bucket) {
         long availableTokens = bucket.getAvailableTokens();
+        
         response.setHeader("X-RateLimit-Remaining", String.valueOf(availableTokens));
     }
 
@@ -32,6 +33,7 @@ public class RateLimiterResponseHelper {
 
         long retryAfterSeconds = probe.getNanosToWaitForRefill() / 1_000_000_000;
 
+        
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setContentType("application/json");
         response.setHeader("Retry-After", String.valueOf(retryAfterSeconds));

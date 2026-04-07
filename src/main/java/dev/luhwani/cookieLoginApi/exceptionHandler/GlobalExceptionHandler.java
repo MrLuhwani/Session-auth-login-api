@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -51,6 +52,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleUserNotFound(UsernameNotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
             "message", "User not found"
+        ));
+    }
+
+    @ExceptionHandler(AuthenticationCredentialsNotFoundException.class) 
+    public ResponseEntity<Map<String, Object>> handleAuthException(AuthenticationCredentialsNotFoundException ex){
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+            "message", ex.getMessage()
         ));
     }
 }

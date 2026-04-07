@@ -35,8 +35,7 @@ public class CustomUserPrincipal implements UserDetails {
         List<SimpleGrantedAuthority> grantedAuthorities = user.authorities().stream()
                 .map(SimpleGrantedAuthority::new)
                 .toList();
-        LocalDateTime lockTime = user.lockedUntil().toLocalDateTime();
-        boolean notLocked = lockTime == null || LocalDateTime.now().isAfter(lockTime) ? true : false;
+        boolean notLocked = user.lockedUntil() == null || LocalDateTime.now().isAfter(user.lockedUntil().toLocalDateTime()) ? true : false;
         return new CustomUserPrincipal(
                 user.id(),
                 user.email(),

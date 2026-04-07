@@ -16,8 +16,9 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(rateLimitInterceptor)
-                .addPathPatterns("/login", "/register");
+                .addPathPatterns("/register");
         
-        // when you want to add the /admin-login, work as expected
+        // when you have other endpoints you wish to rate limit, you
+        // add them here
     }
 }

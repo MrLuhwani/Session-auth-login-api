@@ -38,6 +38,7 @@ public class UserRepository {
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbc.update(connection -> {
+            // confused of why I needed to create this "id"
             PreparedStatement ps = connection.prepareStatement(sql, new String[] { "id" });
             ps.setString(1, req.email().trim());
             ps.setString(2, req.username().trim());
@@ -71,9 +72,9 @@ public class UserRepository {
 
     public Optional<UserRecord> findByEmail(String email) {
         String sql = """
-                select id, email, username, password_hash, enabled, locked_until
-                from users
-                where email = ?
+                SELECT id, email, username, password_hash, enabled, locked_until
+                FROM users
+                WHERE email = ?
                 """;
 
         try {

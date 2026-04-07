@@ -5,7 +5,7 @@ import org.springframework.dao.DataAccessException;
 public class AuthInfrastructureException extends RuntimeException{
 
     public AuthInfrastructureException(String message, DataAccessException e) {
-        super(message);
+        super(message, e);
     }
 
     public AuthInfrastructureException(String message) {

@@ -1,5 +1,7 @@
 package dev.luhwani.cookieLoginApi.security;
 
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -11,11 +13,14 @@ import org.springframework.security.config.annotation.web.configurers.SessionMan
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 @Configuration
 @EnableWebSecurity
@@ -27,20 +32,23 @@ public class SecurityConfig {
     private final JsonAuthenticationFailureHandler authenticationFailureHandler;
     private final JsonAuthenticationSuccessHandler authenticationSuccessHandler;
     private final JsonLogoutSuccessHandler logoutSuccessHandler;
+    
+    private final LoginRateLimiter loginRateLimiter;
 
     public SecurityConfig(JsonAccessDeniedHandler accessDeniedHandler,
             JsonAuthenticationEntryPoint authenticationEntryPoint,
             JsonAuthenticationFailureHandler authenticationFailureHandler,
             JsonAuthenticationSuccessHandler authenticationSuccessHandler,
-            JsonLogoutSuccessHandler logoutSuccessHandler) {
+            JsonLogoutSuccessHandler logoutSuccessHandler,
+            LoginRateLimiter loginRateLimiter) {
         this.accessDeniedHandler = accessDeniedHandler;
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.authenticationFailureHandler = authenticationFailureHandler;
         this.authenticationSuccessHandler = authenticationSuccessHandler;
         this.logoutSuccessHandler = logoutSuccessHandler;
+        this.loginRateLimiter = loginRateLimiter;
     }
 
-    //yo, check how this works from Claude later
     @Configuration
     public static class JacksonConfig {
         @Bean
@@ -63,9 +71,6 @@ public class SecurityConfig {
     // oldest cookie session, and allocates
     // a new session to the new device
 
-    // hold on, is this actually working, tests with postman are still
-    // allowing more than two sessisons
-
     private void hardenSession(SessionManagementConfigurer<HttpSecurity> session) {
         session.sessionFixation(SessionManagementConfigurer.SessionFixationConfigurer::migrateSession)
                 .maximumSessions(2).maxSessionsPreventsLogin(false);
@@ -81,10 +86,22 @@ public class SecurityConfig {
         return new HttpSessionSecurityContextRepository();
     }
 
+    @Configuration
+    public static class CacheConfig {
+        @Bean
+        public Cache<String, String> lockedAccountsToIp() {
+            return Caffeine.newBuilder()
+                    .expireAfterWrite(1, TimeUnit.HOURS)
+                    .maximumSize(1000)
+                    .build();
+    }
+    }
+
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/public/**", "/login", "/register", "/csrf").permitAll()
+        http.addFilterBefore(loginRateLimiter, UsernamePasswordAuthenticationFilter.class)
+            .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/", "/login", "/register", "/csrf").permitAll()
                         .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated())
                 // the csrf token repo ensures that the request is specifically from our site
