@@ -1,5 +1,6 @@
 package dev.luhwani.cookieLoginApi.controllers;
 
+import dev.luhwani.cookieLoginApi.dto.ApiResponse;
 import dev.luhwani.cookieLoginApi.dto.MeResponse;
 import dev.luhwani.cookieLoginApi.security.CustomUserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -13,13 +14,14 @@ public class MeController {
 
     //is this meant to have @Preauthorize hmm...
     @GetMapping("/me")
-    public MeResponse me(@AuthenticationPrincipal CustomUserPrincipal principal) {
-        return new MeResponse(
+    public ApiResponse<MeResponse> me(@AuthenticationPrincipal CustomUserPrincipal principal) {
+        var meResponse = new MeResponse(
                 principal.getEmail(),
                 principal.getDisplayUsername(),
                 principal.getAuthorities().stream()
                         .map(a -> a.getAuthority())
                         .collect(Collectors.toList())
         );
+        return new ApiResponse<>(true, meResponse);
     }
 }

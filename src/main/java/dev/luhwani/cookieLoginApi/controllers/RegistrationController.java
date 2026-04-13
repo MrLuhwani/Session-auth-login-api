@@ -1,5 +1,6 @@
 package dev.luhwani.cookieLoginApi.controllers;
 
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import dev.luhwani.cookieLoginApi.dto.ApiResponse;
 import dev.luhwani.cookieLoginApi.dto.RegisterRequest;
 import dev.luhwani.cookieLoginApi.dto.RegisterResponse;
 import dev.luhwani.cookieLoginApi.security.CustomUserPrincipal;
@@ -30,7 +32,7 @@ public class RegistrationController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<RegisterResponse> register(
+    public ResponseEntity<ApiResponse<RegisterResponse>> register(
             @Valid @RequestBody RegisterRequest req, HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
         
@@ -38,17 +40,17 @@ public class RegistrationController {
 
         Authentication authentication = registrationService.registerAndLogin(req, httpRequest, httpResponse);
         CustomUserPrincipal principal = (CustomUserPrincipal) authentication.getPrincipal();
-
-        RegisterResponse body = new RegisterResponse(
-                "Registration successful",
+        
+        RegisterResponse data = new RegisterResponse(
                 principal.getEmail(),
                 principal.getDisplayUsername(),
                 principal.getAuthorities().stream()
                         .map(a -> a.getAuthority())
-                        .collect(Collectors.toList()),
-                "/me");
+                        .collect(Collectors.toList()));
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(body);
+        ApiResponse<RegisterResponse> response = new ApiResponse<RegisterResponse>(true, data,"Registration successful", Map.of("redirect","http://localhost:8080/me"));
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
 }

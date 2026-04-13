@@ -14,51 +14,55 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import dev.luhwani.cookieLoginApi.customExceptions.AuthInfrastructureException;
 import dev.luhwani.cookieLoginApi.customExceptions.DuplicateEmailException;
 import dev.luhwani.cookieLoginApi.customExceptions.DuplicateUsernameException;
+import dev.luhwani.cookieLoginApi.dto.ApiResponse;
+import dev.luhwani.cookieLoginApi.dto.ErrorResponse;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationError(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
+    public ResponseEntity<ApiResponse<ErrorResponse>> handleValidationError(MethodArgumentNotValidException ex) {
+        Map<String, Object> errors = new HashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(err -> {
             errors.put(err.getField(), err.getDefaultMessage());
         });
-        return ResponseEntity.badRequest().body(errors);
+        var errorResponse = new ErrorResponse(400, errors);
+        ApiResponse<ErrorResponse> response = new ApiResponse<>(false, errorResponse);
+        return ResponseEntity.badRequest().body(response);
     }
 
     @ExceptionHandler(DuplicateEmailException.class)
-    public ResponseEntity<Map<String, Object>> handleDuplicateEmail(DuplicateEmailException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
-                "message", ex.getMessage()
-        ));
+    public ResponseEntity<ApiResponse<ErrorResponse>> handleDuplicateEmail(DuplicateEmailException ex) {
+        var errorResponse = new ErrorResponse(409, Map.of("message", ex.getMessage()));
+        ApiResponse<ErrorResponse> response = new ApiResponse<>(false, errorResponse);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
 
     @ExceptionHandler(DuplicateUsernameException.class)
-    public ResponseEntity<Map<String, Object>> handleDuplicateUsername(DuplicateUsernameException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
-                "message", ex.getMessage()
-        ));
+    public ResponseEntity<ApiResponse<ErrorResponse>> handleDuplicateUsername(DuplicateUsernameException ex) {
+        var errorResponse = new ErrorResponse(409, Map.of("message", ex.getMessage()));
+        ApiResponse<ErrorResponse> response = new ApiResponse<>(false, errorResponse);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
 
     @ExceptionHandler(AuthInfrastructureException.class)
-    public ResponseEntity<Map<String, Object>> handleInfrastructure(AuthInfrastructureException ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                "message", "Authentication infrastructure error"
-        ));
+    public ResponseEntity<ApiResponse<ErrorResponse>> handleInfrastructure(AuthInfrastructureException ex) {
+        var errorResponse = new ErrorResponse(500, Map.of("message", "Authentication infrastructure error"));
+        ApiResponse<ErrorResponse> response = new ApiResponse<>(false, errorResponse);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleUserNotFound(UsernameNotFoundException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
-            "message", "User not found"
-        ));
+    public ResponseEntity<ApiResponse<ErrorResponse>> handleUserNotFound(UsernameNotFoundException e) {
+        var errorResponse = new ErrorResponse(404, Map.of("message", "User not found"));
+        ApiResponse<ErrorResponse> response = new ApiResponse<>(false, errorResponse);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
     @ExceptionHandler(AuthenticationCredentialsNotFoundException.class) 
-    public ResponseEntity<Map<String, Object>> handleAuthException(AuthenticationCredentialsNotFoundException ex){
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
-            "message", ex.getMessage()
-        ));
+    public ResponseEntity<ApiResponse<ErrorResponse>> handleAuthException(AuthenticationCredentialsNotFoundException ex){
+        var errorResponse = new ErrorResponse(400, Map.of("message", ex.getMessage()));
+        ApiResponse<ErrorResponse> response = new ApiResponse<>(false, errorResponse);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 }

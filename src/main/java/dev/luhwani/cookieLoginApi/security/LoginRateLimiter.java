@@ -15,6 +15,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import dev.luhwani.cookieLoginApi.dto.ApiResponse;
+import dev.luhwani.cookieLoginApi.dto.ErrorResponse;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
@@ -108,13 +110,12 @@ public class LoginRateLimiter extends OncePerRequestFilter {
         response.setHeader("X-RateLimit-Remaining", "0");
 
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("status", 429);
         body.put("error", "Too Many Requests");
         body.put("message", "Rate limit exceeded. Try again in " + retryAfterSeconds + " seconds.");
         body.put("retryAfterSeconds", retryAfterSeconds);
-
-        objectMapper.writeValue(response.getOutputStream(), body);
-
+        ErrorResponse errs = new ErrorResponse(429, body);
+        var msg = new ApiResponse<>(false, errs);
+        objectMapper.writeValue(response.getOutputStream(), msg);
     }
 
 }

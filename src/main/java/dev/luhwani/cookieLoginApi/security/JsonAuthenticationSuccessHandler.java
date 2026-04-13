@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import dev.luhwani.cookieLoginApi.dto.ApiResponse;
 import dev.luhwani.cookieLoginApi.repositories.UserRepository;
 
 import java.io.IOException;
@@ -36,20 +37,19 @@ public class JsonAuthenticationSuccessHandler implements AuthenticationSuccessHa
 
         CustomUserPrincipal principal = (CustomUserPrincipal) authentication.getPrincipal();
 
-        Map<String, Object> body = Map.of(
-                "message", "Login successful",
-                "user", Map.of(
-                        "id", principal.getId(),
-                        "email", principal.getEmail(),
-                        "username", principal.getDisplayUsername(),
-                        "authorities", principal.getAuthorities().stream()
-                                .map(a -> a.getAuthority())
-                                .collect(Collectors.toList())
-                )
-        );
+        
         userRepository.setLastLogin(principal.getId());
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType("application/json");
+        ApiResponse<Map<String, Object>> body = new ApiResponse<>(true, Map.of(
+                "id", principal.getId(),
+                "user", Map.of(
+                        "username", principal.getUsername(),
+                "roles", principal.getAuthorities().stream()
+                        .map(auth -> auth.getAuthority())
+                        .collect(Collectors.toList())
+                )
+        ), "Login successful", Map.of("redirect", "http://localhost:8080/me"));
         objectMapper.writeValue(response.getOutputStream(), body);
     }
 }

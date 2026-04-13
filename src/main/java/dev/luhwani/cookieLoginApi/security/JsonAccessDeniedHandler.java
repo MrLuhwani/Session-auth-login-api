@@ -12,6 +12,9 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import dev.luhwani.cookieLoginApi.dto.ApiResponse;
+import dev.luhwani.cookieLoginApi.dto.ErrorResponse;
+
 import java.io.IOException;
 import java.util.Map;
 
@@ -33,14 +36,15 @@ public class JsonAccessDeniedHandler implements AccessDeniedHandler {
             AccessDeniedException accessDeniedException) throws IOException, ServletException {
 
         log.warn("request ip: {} tried to access a protected endpoint", request.getRemoteAddr());
-        
+
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        response.setContentType("application/json");
-        objectMapper.writeValue(response.getOutputStream(), Map.of(
+        ErrorResponse error = new ErrorResponse(403, Map.of(
                 "message", "Access denied",
                 "path", request.getRequestURI(),
                 "error", accessDeniedException.getClass().getSimpleName()
-
         ));
+        ApiResponse<ErrorResponse> msg = new ApiResponse<>(false, error);
+        response.setContentType("application/json");
+        objectMapper.writeValue(response.getOutputStream(), msg);
     }
 }

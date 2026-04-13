@@ -9,6 +9,9 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import dev.luhwani.cookieLoginApi.dto.ApiResponse;
+import dev.luhwani.cookieLoginApi.dto.ErrorResponse;
+
 import java.io.IOException;
 import java.util.Map;
 
@@ -30,8 +33,8 @@ public class JsonAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
-        objectMapper.writeValue(response.getOutputStream(), Map.of(
-                "message", "Authentication required"
-        ));
+        ErrorResponse error = new ErrorResponse(401, Map.of("message", "Authentication required"));
+        ApiResponse<ErrorResponse> msg = new ApiResponse<>(false, error);
+        objectMapper.writeValue(response.getOutputStream(), msg);
     }
 }

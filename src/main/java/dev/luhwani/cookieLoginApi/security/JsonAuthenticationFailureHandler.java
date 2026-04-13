@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 
+import dev.luhwani.cookieLoginApi.dto.ApiResponse;
+import dev.luhwani.cookieLoginApi.dto.ErrorResponse;
 import dev.luhwani.cookieLoginApi.repositories.UserRepository;
 
 import java.io.IOException;
@@ -87,10 +89,11 @@ public class JsonAuthenticationFailureHandler implements AuthenticationFailureHa
     }
 
     private void sendGenericFailureResponse(HttpServletResponse response) throws IOException {
-        Map<String, Object> body = Map.of("message", "Invalid email or password");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
         response.addHeader("error", "AuthenticationException");
-        objectMapper.writeValue(response.getOutputStream(), body);
+        ErrorResponse error = new ErrorResponse(401, Map.of("message", "Invalid email or password"));
+        ApiResponse<ErrorResponse> msg = new ApiResponse<>(false, error);
+        objectMapper.writeValue(response.getOutputStream(), msg);
     }
 }
