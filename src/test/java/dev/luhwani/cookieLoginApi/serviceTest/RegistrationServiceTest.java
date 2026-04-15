@@ -1,6 +1,7 @@
 package dev.luhwani.cookieLoginApi.serviceTest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -51,6 +52,27 @@ public class RegistrationServiceTest {
         Long result = registrationService.register(request);
         assertEquals(1L, result);
     }
+
+    
+    @Test
+    void shouldRegisterUserSuccessfully() {
+        RegisterRequest req = new RegisterRequest("test@mail.com", "user123", "Password1");
+
+        when(passwordEncoder.encode(any())).thenReturn("hashed");
+        when(userRepo.registerUserAndReturnId(any(), any())).thenReturn(1L);
+
+        Authentication auth = mock(Authentication.class);
+        when(authenticationManager.authenticate(any())).thenReturn(auth);
+
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        HttpServletResponse response = mock(HttpServletResponse.class);
+
+        Authentication result = registrationService.registerAndLogin(req, request, response);
+
+        assertNotNull(result);
+        verify(userRepo).setLastLogin(1L);
+    }
+
 
     @Test
     void register_shouldThrowDuplicateUsernameException() {
