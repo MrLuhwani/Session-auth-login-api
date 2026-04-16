@@ -65,9 +65,9 @@ public class RegistrationService {
             return userId;
         } catch (DataIntegrityViolationException e) {
             String message = e.getMostSpecificCause().getMessage().toLowerCase();
-            if (message.contains("users_username_key") || message.contains("unique")) {
+            if (message.contains("users_username_key")) {
                 throw new DuplicateUsernameException("Username is already taken");
-            } else if (message.contains("users_email_key") || message.contains("unique")) {
+            } else if (message.contains("users_email_key")) {
                 throw new DuplicateEmailException("Email is already registered");
             } else {
                 throw new RuntimeException("A database error occurred during registration", e);

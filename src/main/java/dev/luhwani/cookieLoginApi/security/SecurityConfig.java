@@ -11,6 +11,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.SessionManagementConfigurer;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -34,7 +36,7 @@ public class SecurityConfig {
     private final JsonAuthenticationFailureHandler authenticationFailureHandler;
     private final JsonAuthenticationSuccessHandler authenticationSuccessHandler;
     private final JsonLogoutSuccessHandler logoutSuccessHandler;
-    
+
     private final LoginRateLimiter loginRateLimiter;
 
     public SecurityConfig(JsonAccessDeniedHandler accessDeniedHandler,
@@ -49,6 +51,11 @@ public class SecurityConfig {
         this.authenticationSuccessHandler = authenticationSuccessHandler;
         this.logoutSuccessHandler = logoutSuccessHandler;
         this.loginRateLimiter = loginRateLimiter;
+    }
+
+    @Bean
+    public SessionRegistry sessionRegistry() {
+        return new SessionRegistryImpl();
     }
 
     @Configuration
@@ -75,7 +82,7 @@ public class SecurityConfig {
 
     private void hardenSession(SessionManagementConfigurer<HttpSecurity> session) {
         session.sessionFixation(SessionManagementConfigurer.SessionFixationConfigurer::migrateSession)
-                .maximumSessions(2).maxSessionsPreventsLogin(false);
+                .maximumSessions(2).sessionRegistry(sessionRegistry()).maxSessionsPreventsLogin(false);
     }
 
     @Bean
@@ -96,13 +103,13 @@ public class SecurityConfig {
                     .expireAfterWrite(1, TimeUnit.HOURS)
                     .maximumSize(1000)
                     .build();
-    }
+        }
     }
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.addFilterBefore(loginRateLimiter, UsernamePasswordAuthenticationFilter.class)
-            .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/login", "/register", "/csrf").permitAll()
                         .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
                         .anyRequest().authenticated())

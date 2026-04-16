@@ -77,6 +77,7 @@ public class CustomUserPrincipal implements UserDetails {
         return enabled;
     }
 
+    @Override
     public boolean isAccountNonLocked() {
       return notLocked;
    }
