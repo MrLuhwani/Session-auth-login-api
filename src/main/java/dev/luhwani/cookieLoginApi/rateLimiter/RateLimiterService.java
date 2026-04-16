@@ -23,14 +23,21 @@ public class RateLimiterService {
                 .build();
     }
 
-    // if you wish to rate limit "per ip" other endpoints, create more methods like this, 
-    // and add the bucket to the resolveBucket method
+    private Bucket createAdminRegisterBucket() {
+        return Bucket.builder()
+                .addLimit(Bandwidth.builder()
+                        .capacity(3)
+                        .refillIntervally(1, Duration.ofMinutes(2))
+                        .build())
+                .build();
+    }
 
     public Bucket resolveBucket(String ip, String endpointKey) {
         String key = ip + ":" + endpointKey;
         return switch (endpointKey) {
             case "register" -> buckets.computeIfAbsent(key, k -> createRegisterBucket());
-            default         -> throw new IllegalArgumentException("Unknown endpoint key: " + endpointKey);
+            case "admin-register" -> buckets.computeIfAbsent(key, k -> createAdminRegisterBucket());
+            default -> throw new IllegalArgumentException("Unknown endpoint key: " + endpointKey);
         };
     }
     

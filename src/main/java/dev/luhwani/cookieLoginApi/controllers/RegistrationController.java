@@ -1,6 +1,7 @@
 package dev.luhwani.cookieLoginApi.controllers;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -12,9 +13,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import dev.luhwani.cookieLoginApi.customExceptions.AuthInfrastructureException;
 import dev.luhwani.cookieLoginApi.dto.ApiResponse;
 import dev.luhwani.cookieLoginApi.dto.RegisterRequest;
 import dev.luhwani.cookieLoginApi.dto.RegisterResponse;
+import dev.luhwani.cookieLoginApi.dto.Role;
 import dev.luhwani.cookieLoginApi.security.CustomUserPrincipal;
 import dev.luhwani.cookieLoginApi.services.RegistrationService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,8 +41,13 @@ public class RegistrationController {
         
         log.debug("Register request from ip: {}", httpRequest.getRemoteAddr());
 
-        Authentication authentication = registrationService.registerAndLogin(req, httpRequest, httpResponse);
-        CustomUserPrincipal principal = (CustomUserPrincipal) authentication.getPrincipal();
+        Role user = Role.USER;
+        Optional <Authentication> authentication = registrationService.registerUser(req, user, httpRequest, httpResponse);
+        if (authentication.isEmpty()) {
+            log.warn("Empty optional while retrieving authentication object of: {} from ip {}", req.email(), httpRequest.getLocalAddr());
+            throw new AuthInfrastructureException("Could not authenticate user");
+        }
+        CustomUserPrincipal principal = (CustomUserPrincipal) authentication.get().getPrincipal();
         
         RegisterResponse data = new RegisterResponse(
                 principal.getEmail(),

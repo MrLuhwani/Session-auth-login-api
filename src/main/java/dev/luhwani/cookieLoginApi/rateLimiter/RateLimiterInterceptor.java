@@ -18,14 +18,18 @@ public class RateLimiterInterceptor implements HandlerInterceptor {
     private final RateLimiterResponseHelper responseHelper;
 
     private static final Bucket registerEndpointBucket = Bucket.builder().addLimit(
-                    Bandwidth.builder()
-                        .capacity(10)
-                        .refillIntervally(10, Duration.ofMinutes(1))
-                        .build())
-                    .build();
+            Bandwidth.builder()
+                    .capacity(10)
+                    .refillIntervally(10, Duration.ofMinutes(1))
+                    .build())
+            .build();
 
-    // any other endpoint that needs to be rate limited will also be placed here
-    // except for the login endpoint because Spring will handle login for you
+    private static final Bucket adminRegisterEndpointBucket = Bucket.builder().addLimit(
+            Bandwidth.builder()
+                    .capacity(6)
+                    .refillIntervally(3, Duration.ofMinutes(5))
+                    .build())
+            .build();
 
     public RateLimiterInterceptor(RateLimiterService rateLimiterService,
             RateLimiterResponseHelper responseHelper) {
@@ -48,16 +52,18 @@ public class RateLimiterInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        // if other endpoints to be rate limited existed, there would be an if-else, to
-        // determine whose bucket should have a consumption probe gotten from
-
-        ConsumptionProbe probe = registerEndpointBucket.tryConsumeAndReturnRemaining(1);;
+        ConsumptionProbe probe;
+        if (endpointKey.equals("register")) {
+            probe = registerEndpointBucket.tryConsumeAndReturnRemaining(1);
+        } else {
+            probe = adminRegisterEndpointBucket.tryConsumeAndReturnRemaining(1);
+        }
 
         if (!probe.isConsumed()) {
             responseHelper.writeRateLimitExceededResponse(response, probe);
             return false;
         }
-        
+
         Bucket bucket = rateLimiterService.resolveBucket(ip, endpointKey);
         probe = bucket.tryConsumeAndReturnRemaining(1);
 
@@ -71,11 +77,10 @@ public class RateLimiterInterceptor implements HandlerInterceptor {
     }
 
     private String resolveEndpointKey(String path) {
-        if (path.contains("/login"))
-            return "login";
+        if (path.contains("/admin/register"))
+            return "admin-register";
         if (path.contains("/register"))
             return "register";
         return null;
-        // when you have admin endpoints, add them here
     }
 }

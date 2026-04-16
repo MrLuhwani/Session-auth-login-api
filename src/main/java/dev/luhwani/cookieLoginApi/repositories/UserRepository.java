@@ -16,6 +16,7 @@ import org.springframework.stereotype.Repository;
 
 import dev.luhwani.cookieLoginApi.customExceptions.AuthInfrastructureException;
 import dev.luhwani.cookieLoginApi.dto.RegisterRequest;
+import dev.luhwani.cookieLoginApi.dto.Role;
 import dev.luhwani.cookieLoginApi.dto.UserRecord;
 
 @Repository
@@ -29,7 +30,7 @@ public class UserRepository {
         this.jdbc = jdbc;
     }
 
-    public Long registerUserAndReturnId(RegisterRequest req, String passwordHash) {
+    public Long registerUserAndReturnId(RegisterRequest req, String passwordHash, Role role) {
         String sql = """
                 INSERT INTO users (email, username, password_hash, enabled, created_at)
                 VALUES (?, ?, ?, true, NOW())
@@ -38,7 +39,6 @@ public class UserRepository {
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbc.update(connection -> {
-            // confused of why I needed to create this "id"
             PreparedStatement ps = connection.prepareStatement(sql, new String[] { "id" });
             ps.setString(1, req.email().trim());
             ps.setString(2, req.username().trim());
@@ -56,7 +56,7 @@ public class UserRepository {
 
         Long userId = idKey.longValue();
         String authoritySql = "INSERT INTO authorities (user_id, authority) VALUES (?, ?)";
-        jdbc.update(authoritySql, userId, "ROLE_USER");
+        jdbc.update(authoritySql, userId, role.getAuthority());
 
         log.info("New registered user with id: {}", userId);
 
@@ -123,5 +123,4 @@ public class UserRepository {
         String sql = "UPDATE users SET locked_until = ? WHERE email = ?";
         jdbc.update(sql, Timestamp.valueOf(until), email);
     }
-
 }

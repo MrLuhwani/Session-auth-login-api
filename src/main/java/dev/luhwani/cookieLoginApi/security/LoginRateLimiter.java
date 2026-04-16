@@ -59,7 +59,7 @@ public class LoginRateLimiter extends OncePerRequestFilter {
         String email = request.getParameter("email");
         String ip = request.getRemoteAddr();
         
-        if (email.isEmpty()) {
+        if (email == null || email.trim().isEmpty()) {
             log.warn("Null email sent from ip: {}", ip);
             throw new AuthenticationCredentialsNotFoundException("Email not found in request body");
         }

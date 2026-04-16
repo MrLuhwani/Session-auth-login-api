@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
@@ -35,9 +36,14 @@ public class JsonAuthenticationSuccessHandler implements AuthenticationSuccessHa
             Authentication authentication
     ) throws IOException, ServletException {
 
+        String redirectLink = "http://localhost:8080/me";
         CustomUserPrincipal principal = (CustomUserPrincipal) authentication.getPrincipal();
-
-        
+        SimpleGrantedAuthority adminAuthority = new SimpleGrantedAuthority("ROLE_ADMIN");
+        for (SimpleGrantedAuthority auth : principal.getAuthorities()) {
+                if (auth.equals(adminAuthority)) {
+                        redirectLink = "http://localhost:8080/admin/home";
+                }
+        }        
         userRepository.setLastLogin(principal.getId());
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType("application/json");
@@ -49,7 +55,7 @@ public class JsonAuthenticationSuccessHandler implements AuthenticationSuccessHa
                         .map(auth -> auth.getAuthority())
                         .collect(Collectors.toList())
                 )
-        ), "Login successful", Map.of("redirect", "http://localhost:8080/me"));
+        ), "Login successful", Map.of("redirect", redirectLink));
         objectMapper.writeValue(response.getOutputStream(), body);
     }
 }

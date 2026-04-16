@@ -1,5 +1,7 @@
 package dev.luhwani.cookieLoginApi.services;
 
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
@@ -18,6 +20,7 @@ import dev.luhwani.cookieLoginApi.customExceptions.AuthInfrastructureException;
 import dev.luhwani.cookieLoginApi.customExceptions.DuplicateEmailException;
 import dev.luhwani.cookieLoginApi.customExceptions.DuplicateUsernameException;
 import dev.luhwani.cookieLoginApi.dto.RegisterRequest;
+import dev.luhwani.cookieLoginApi.dto.Role;
 import dev.luhwani.cookieLoginApi.repositories.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -43,19 +46,22 @@ public class RegistrationService {
     }
 
     @Transactional
-    public Authentication registerAndLogin(RegisterRequest req, HttpServletRequest httpRequest,
+    public Optional<Authentication> registerUser(RegisterRequest req, Role role, HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
-        Long userId = register(req);
+        Long userId = register(req, role);
+        if (role.getAuthority().equals("ROLE_ADMIN")) {
+            return Optional.empty();
+        }
         Authentication authentication = loginAfterRegistration(req, httpRequest, httpResponse);
         userRepo.setLastLogin(userId);
-        return authentication;
+        return Optional.of(authentication);
     }
 
-    public Long register(RegisterRequest req) {
+    private Long register(RegisterRequest req, Role role) {
 
         try {
             String passwordHash = passwordEncoder.encode(req.password());
-            Long userId = userRepo.registerUserAndReturnId(req, passwordHash);
+            Long userId = userRepo.registerUserAndReturnId(req, passwordHash, role);
             return userId;
         } catch (DataIntegrityViolationException e) {
             String message = e.getMostSpecificCause().getMessage().toLowerCase();
@@ -74,7 +80,7 @@ public class RegistrationService {
         }
     }
 
-    public Authentication loginAfterRegistration(RegisterRequest req,
+    private Authentication loginAfterRegistration(RegisterRequest req,
             HttpServletRequest request,
             HttpServletResponse response) {
         Authentication authentication = authenticationManager.authenticate(

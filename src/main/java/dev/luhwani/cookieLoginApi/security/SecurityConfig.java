@@ -2,6 +2,7 @@ package dev.luhwani.cookieLoginApi.security;
 
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
+@EnableCaching
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
