@@ -38,13 +38,6 @@ public class LoginRateLimiter extends OncePerRequestFilter {
         this.objectMapper = objectMapper;
     }
 
-    private static final Bucket loginEndpointBucket = Bucket.builder().addLimit(
-            Bandwidth.builder()
-                    .capacity(15)
-                    .refillIntervally(15, Duration.ofMinutes(1))
-                    .build())
-            .build();
-
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
@@ -64,16 +57,9 @@ public class LoginRateLimiter extends OncePerRequestFilter {
             throw new AuthenticationCredentialsNotFoundException("Email not found in request body");
         }
 
-        ConsumptionProbe probe = loginEndpointBucket.tryConsumeAndReturnRemaining(1);
-
-        if (!probe.isConsumed()) {
-            writeRateLimitExceededResponse(response, probe);
-            return;
-        }
-
         Bucket bucket = buckets.computeIfAbsent(ip, i -> createLoginBucket());
 
-        probe = bucket.tryConsumeAndReturnRemaining(1);
+        ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
 
         if (probe.isConsumed()) {
             addRateLimitHeaders(response, bucket);
