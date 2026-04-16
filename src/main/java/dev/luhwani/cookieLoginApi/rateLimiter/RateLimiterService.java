@@ -12,7 +12,7 @@ import io.github.bucket4j.Bucket;
 @Service
 public class RateLimiterService {
 
-    public final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+    public static final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
 
     private Bucket createRegisterBucket() {
         return Bucket.builder()
